@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ingressos — Comprar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: rgba(255,255,255,0.08);
+    --accent: #c8f060;
+    --accent2: #7b5cfa;
+    --text: #f0efea;
+    --muted: #6b6a72;
+    --error: #ff5f5f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(123,92,250,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .wrapper { position: relative; z-index: 1; width: 100%; max-width: 460px; }
+  .event-header { margin-bottom: 32px; text-align: center; }
+  .event-tag {
+    display: inline-block;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(200,240,96,0.3);
+    padding: 4px 12px; border-radius: 100px; margin-bottom: 16px;
+  }
+  .event-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(28px, 7vw, 42px);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.02em; margin-bottom: 10px;
+  }
+  .event-title span { color: var(--accent); }
+  .event-meta { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+  .meta-item { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+  .meta-dot { width: 4px; height: 4px; background: var(--accent2); border-radius: 50%; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+  .stepper { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; }
+  .step {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+    padding: 16px 0; font-size: 12px; font-weight: 500;
+    color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.3s;
+  }
+  .step.active { color: var(--text); border-bottom-color: var(--accent); }
+  .step.done { color: var(--accent); }
+  .step-num {
+    width: 20px; height: 20px; border-radius: 50%;
+    border: 1px solid currentColor;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; flex-shrink: 0;
+  }
+  .step.active .step-num, .step.done .step-num { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+  .panel { display: none; padding: 28px 28px 32px; animation: fadeIn 0.35s ease; }
+  .panel.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .ticket-select { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
+  .ticket-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; cursor: pointer; transition: border-color 0.2s; user-select: none;
+  }
+  .ticket-option:hover { border-color: rgba(255,255,255,0.2); }
+  .ticket-option.selected { border-color: var(--accent); background: rgba(200,240,96,0.05); }
+  .ticket-option input[type=radio] { display: none; }
+  .ticket-info { display: flex; flex-direction: column; gap: 2px; }
+  .ticket-name { font-size: 14px; font-weight: 500; }
+  .ticket-desc { font-size: 12px; color: var(--muted); }
+  .ticket-price { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
+  .qty-control {
+    display: flex; align-items: center;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; width: fit-content;
+  }
+  .qty-btn {
+    background: none; border: none; color: var(--text);
+    font-size: 20px; width: 44px; height: 44px; cursor: pointer;
+    transition: background 0.15s; display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { background: rgba(255,255,255,0.06); }
+  .qty-val {
+    font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+    width: 44px; text-align: center;
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+    height: 44px; line-height: 44px;
+  }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
+  input[type=text], input[type=tel] {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 13px 15px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+    transition: border-color 0.2s; outline: none;
+  }
+  input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(123,92,250,0.15); }
+  input.error { border-color: var(--error); }
+  .field-error { font-size: 11px; color: var(--error); margin-top: 5px; display: none; }
+  .field-error.show { display: block; }
+  .summary {
+    background: var(--surface2); border-radius: 12px; padding: 16px;
+    margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;
+  }
+  .summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+  .summary-row.total {
+    color: var(--text); font-weight: 500; font-size: 15px;
+    border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px;
+  }
+  .summary-row.total span:last-child { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent); font-size: 18px; }
+  .btn-primary {
+    width: 100%; background: var(--accent); color: var(--bg);
+    border: none; border-radius: 12px; padding: 16px;
+    font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,240,96,0.3); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+  .btn-secondary {
+    background: none; border: 1px solid var(--border); color: var(--muted);
+    border-radius: 12px; padding: 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px;
+    cursor: pointer; transition: border-color 0.2s, color 0.2s; width: 100%; margin-top: 10px;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
+  .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
+  .pay-method {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 8px; text-align: center;
+    cursor: pointer; transition: border-color 0.2s; user-select: none;
+  }
+  .pay-method.selected { border-color: var(--accent2); background: rgba(123,92,250,0.08); }
+  .pay-method input { display: none; }
+  .pay-icon { font-size: 20px; margin-bottom: 4px; }
+  .pay-label { font-size: 11px; color: var(--muted); }
+  .pay-method.selected .pay-label { color: var(--text); }
+  .pagbank-notice {
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(123,92,250,0.08); border: 1px solid rgba(123,92,250,0.2);
+    border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--muted); margin-bottom: 20px;
+  }
+  .pagbank-logo {
+    font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px; color: var(--accent2);
+    flex-shrink: 0; padding: 4px 8px; border: 1px solid rgba(123,92,250,0.4); border-radius: 6px;
+  }
+  .loading-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,10,15,0.85); z-index: 100;
+    align-items: center; justify-content: center; flex-direction: column; gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Syne', sans-serif; font-size: 14px; color: var(--muted); }
+  .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Processando…</div>
+</div>
+
+<div class="wrapper">
+  <div class="event-header">
+    <div class="event-tag">✦ Ingresso disponível</div>
+    <!-- ✏️ ALTERE O NOME DO SEU EVENTO ABAIXO -->
+    <h1 class="event-title">Nome do<br><span>Seu Evento</span></h1>
+    <div class="event-meta">
+      <!-- ✏️ ALTERE DATA, HORÁRIO E LOCAL -->
+      <span class="meta-item"><span class="meta-dot"></span> Sáb, 14 Jun 2025</span>
+      <span class="meta-item"><span class="meta-dot"></span> 22h — Open bar</span>
+      <span class="meta-item"><span class="meta-dot"></span> São Paulo, SP</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="stepper">
+      <div class="step active" id="step-tab-1"><div class="step-num">1</div>Ingresso</div>
+      <div class="step" id="step-tab-2"><div class="step-num">2</div>Seus dados</div>
+      <div class="step" id="step-tab-3"><div class="step-num">3</div>Pagamento</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="panel active" id="panel-1">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;">Escolha seu ingresso</div>
+      <div class="ticket-select">
+        <!-- ✏️ ALTERE OS TIPOS E PREÇOS DOS INGRESSOS -->
+        <label class="ticket-option selected" id="opt-pista">
+          <input type="radio" name="ticket" value="pista" checked>
+          <div class="ticket-info">
+            <span class="ticket-name">Pista — 1º lote</span>
+            <span class="ticket-desc">Acesso geral + open bar</span>
+          </div>
+          <span class="ticket-price">R$ 80</span>
+        </label>
+        <label class="ticket-option" id="opt-vip">
+          <input type="radio" name="ticket" value="vip">
+          <div class="ticket-info">
+            <span class="ticket-name">VIP — Camarote</span>
+            <span class="ticket-desc">Mesa privativa + open premium</span>
+          </div>
+          <span class="ticket-price">R$ 160</span>
+        </label>
+      </div>
+      <div class="field">
+        <label>Quantidade</label>
+        <div class="qty-control">
+          <button class="qty-btn" id="qty-minus" type="button">−</button>
+          <span class="qty-val" id="qty-display">1</span>
+          <button class="qty-btn" id="qty-plus" type="button">+</button>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="summary-row"><span id="s1-desc">Pista × 1</span><span id="s1-sub">R$ 80,00</span></div>
+        <div class="summary-row total"><span>Total</span><span id="s1-total">R$ 80,00</span></div>
+      </div>
+      <button class="btn-primary" id="btn-next-1">Continuar →</button>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="panel" id="panel-2">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:20px;">Seus dados</div>
+      <div class="field">
+        <label for="nome">Nome completo</label>
+        <input type="text" id="nome" placeholder="Como aparecerá no ingresso" autocomplete="name">
+        <div class="field-error" id="err-nome">Informe seu nome completo.</div>
+      </div>
+      <div class="field">
+        <label for="telefone">WhatsApp / Telefone</label>
+        <input type="tel" id="telefone" placeholder="(11) 99999-9999" maxlength="15">
+        <div class="field-error" id="err-tel">Informe um telefone válido.</div>
+      </div>
+      <button class="btn-primary" id="btn-next-2">Ir para pagamento →</button>
+      <button class="btn-secondary" id="btn-back-1">← Voltar</button>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="panel" id="panel-3">
+      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;margin-bottom:16px;">Forma de pagamento</div>
+      <div class="payment-methods">
+        <label class="pay-method selected" id="pm-pix">
+          <input type="radio" name="payment" value="pix" checked>
+          <div class="pay-icon">⚡</div><div class="pay-label">PIX</div>
+        </label>
+        <label class="pay-method" id="pm-credit">
+          <input type="radio" name="payment" value="credit_card">
+          <div class="pay-icon">💳</div><div class="pay-label">Cartão</div>
+        </label>
+        <label class="pay-method" id="pm-boleto">
+          <input type="radio" name="payment" value="boleto">
+          <div class="pay-icon">📄</div><div class="pay-label">Boleto</div>
+        </label>
+      </div>
+      <div class="summary">
+        <div class="summary-row"><span id="s2-desc">Pista × 1</span><span id="s2-sub">R$ 80,00</span></div>
+        <div class="summary-row total"><span>Total a pagar</span><span id="s2-total">R$ 80,00</span></div>
+      </div>
+      <div class="pagbank-notice">
+        <span class="pagbank-logo">PagBank</span>
+        <span>Pagamento processado com segurança pelo PagBank.</span>
+      </div>
+      <button class="btn-primary" id="btn-pagar">🔒 Finalizar e pagar</button>
+      <button class="btn-secondary" id="btn-back-2">← Voltar</button>
+    </div>
+  </div>
+
+  <div class="footer">Seus dados estão seguros</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════
+//  CONFIGURAÇÃO — já preenchida com seus dados!
+// ════════════════════════════════════════════════
+const SUPABASE_URL = 'https://lfkxobxubfqgzngesxsl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxma3hvYnh1YmZxZ3puZ2VzeHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjI3MzksImV4cCI6MjA4OTMzODczOX0.uZAA7aF-vIJCtK-6knug6Nzf8uEdCT9BsEX7UBTLEiY';
+
+// ✏️ LINK DE PAGAMENTO DO PAGBANK
+// Depois que criar sua conta no PagBank e gerar um link de cobrança,
+// cole o link aqui:
+const PAGBANK_LINK = 'https://pag.ae/SEU-LINK-AQUI';
+
+// ✏️ PREÇOS DOS INGRESSOS (em centavos: R$80 = 8000)
+const TICKETS = {
+  pista: { name: 'Pista — 1º lote', price: 8000 },
+  vip:   { name: 'VIP — Camarote',  price: 16000 }
+};
+
+// ════════════════════════════════════════════════
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let state = { ticket: 'pista', qty: 1, payment: 'pix', nome: '', telefone: '' };
+
+const fmt = c => 'R$ ' + (c/100).toFixed(2).replace('.',',');
+
+function updateSummary() {
+  const t = TICKETS[state.ticket];
+  const total = t.price * state.qty;
+  const desc = t.name + ' × ' + state.qty;
+  document.getElementById('s1-desc').textContent = desc;
+  document.getElementById('s1-sub').textContent = fmt(t.price * state.qty);
+  document.getElementById('s1-total').textContent = fmt(total);
+  document.getElementById('s2-desc').textContent = desc;
+  document.getElementById('s2-sub').textContent = fmt(t.price * state.qty);
+  document.getElementById('s2-total').textContent = fmt(total);
+}
+
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    document.getElementById('panel-'+i).classList.toggle('active', i===n);
+    const tab = document.getElementById('step-tab-'+i);
+    tab.classList.remove('active','done');
+    if (i===n) tab.classList.add('active');
+    if (i<n)  tab.classList.add('done');
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function phoneMask(v) {
+  v = v.replace(/\D/g,'').substring(0,11);
+  if (v.length<=2) return v;
+  if (v.length<=7) return '('+v.slice(0,2)+') '+v.slice(2);
+  return '('+v.slice(0,2)+') '+v.slice(2,7)+'-'+v.slice(7);
+}
+
+// Ticket select
+document.querySelectorAll('input[name=ticket]').forEach(r => {
+  r.closest('label').addEventListener('click', () => {
+    document.querySelectorAll('.ticket-option').forEach(o => o.classList.remove('selected'));
+    r.closest('label').classList.add('selected');
+    state.ticket = r.value;
+    updateSummary();
+  });
+});
+
+// Qty
+document.getElementById('qty-minus').addEventListener('click', () => { if(state.qty>1){state.qty--;updateSummary();document.getElementById('qty-display').textContent=state.qty;} });
+document.getElementById('qty-plus').addEventListener('click',  () => { if(state.qty<10){state.qty++;updateSummary();document.getElementById('qty-display').textContent=state.qty;} });
+
+// Payment methods
+document.querySelectorAll('input[name=payment]').forEach(r => {
+  r.closest('label').addEventListener('click', () => {
+    document.querySelectorAll('.pay-method').forEach(p => p.classList.remove('selected'));
+    r.closest('label').classList.add('selected');
+    state.payment = r.value;
+  });
+});
+
+// Navegação
+document.getElementById('btn-next-1').addEventListener('click', () => goStep(2));
+document.getElementById('btn-back-1').addEventListener('click', () => goStep(1));
+document.getElementById('btn-back-2').addEventListener('click', () => goStep(2));
+
+document.getElementById('telefone').addEventListener('input', function(){ this.value = phoneMask(this.value); });
+
+document.getElementById('btn-next-2').addEventListener('click', () => {
+  const nome = document.getElementById('nome').value.trim();
+  const tel  = document.getElementById('telefone').value.trim();
+  let ok = true;
+  document.getElementById('err-nome').classList.remove('show');
+  document.getElementById('err-tel').classList.remove('show');
+  document.getElementById('nome').classList.remove('error');
+  document.getElementById('telefone').classList.remove('error');
+  if (nome.split(' ').filter(Boolean).length < 2) {
+    document.getElementById('err-nome').classList.add('show');
+    document.getElementById('nome').classList.add('error');
+    ok = false;
+  }
+  if (tel.replace(/\D/g,'').length < 10) {
+    document.getElementById('err-tel').classList.add('show');
+    document.getElementById('telefone').classList.add('error');
+    ok = false;
+  }
+  if (ok) { state.nome = nome; state.telefone = tel; goStep(3); }
+});
+
+// Finalizar pagamento
+document.getElementById('btn-pagar').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-pagar');
+  btn.disabled = true;
+  document.getElementById('loading-text').textContent = 'Salvando pedido…';
+  document.getElementById('loading').classList.add('show');
+
+  try {
+    const t = TICKETS[state.ticket];
+    const pedidoId = crypto.randomUUID();
+
+    // Salva pedido no Supabase
+    const { error } = await supabase.from('pedidos').insert({
+      id: pedidoId,
+      nome: state.nome,
+      telefone: state.telefone,
+      ticket_type: state.ticket,
+      ticket_name: t.name,
+      qty: state.qty,
+      amount: t.price * state.qty,
+      payment_method: state.payment,
+      status: 'PENDING'
+    });
+
+    if (error) throw error;
+
+    // Guarda o pedido_id no navegador para recuperar depois
+    localStorage.setItem('pedido_pendente', pedidoId);
+    localStorage.setItem('pedido_nome', state.nome);
+
+    document.getElementById('loading-text').textContent = 'Redirecionando para o pagamento…';
+
+    // Redireciona para o link do PagBank
+    // O comprador volta para ingresso.html?pedido_id=XXX após pagar
+    setTimeout(() => {
+      window.location.href = PAGBANK_LINK + '?reference_id=' + pedidoId;
+    }, 800);
+
+  } catch (err) {
+    console.error(err);
+    document.getElementById('loading').classList.remove('show');
+    btn.disabled = false;
+    alert('Erro ao salvar pedido. Tente novamente.');
+  }
+});
+
+updateSummary();
+</script>
+</body>
+</html>

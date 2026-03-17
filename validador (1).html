@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validador de Ingressos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@500&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --bg:#0d0f0d; --surface:#141814; --surface2:#1a1f1a; --border:rgba(255,255,255,0.08);
+    --accent:#c8f060; --text:#e8ede8; --muted:#5f685f;
+    --ok-bg:#0d2010; --ok-border:rgba(74,222,128,0.3); --ok-text:#4ade80;
+    --fail-bg:#200d0d; --fail-border:rgba(255,95,95,0.3); --fail-text:#ff5f5f;
+    --warn-bg:#1f1800; --warn-text:#f59e0b;
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:24px 16px; }
+  .header { width:100%; max-width:440px; display:flex; align-items:center; justify-content:space-between; margin-bottom:28px; }
+  .brand { font-family:'Syne',sans-serif; font-size:13px; font-weight:700; color:var(--accent); letter-spacing:0.05em; }
+  .status { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--muted); }
+  .dot { width:6px; height:6px; border-radius:50%; background:var(--accent); animation:pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .main { width:100%; max-width:440px; display:flex; flex-direction:column; gap:14px; }
+  .counters { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  .cnt { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:14px 12px; text-align:center; }
+  .cnt-num { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; margin-bottom:4px; }
+  .cnt-num.ok{color:var(--ok-text)} .cnt-num.fail{color:var(--fail-text)} .cnt-num.total{color:var(--accent)}
+  .cnt-label { font-size:10px; font-weight:500; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+  .keypad-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .kp-header { padding:20px 20px 0; text-align:center; }
+  .kp-title { font-family:'Syne',sans-serif; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); margin-bottom:20px; }
+  .code-display { display:flex; justify-content:center; gap:10px; margin-bottom:24px; }
+  .slot {
+    width:56px; height:70px; background:var(--surface2); border:1.5px solid var(--border);
+    border-radius:10px; display:flex; align-items:center; justify-content:center;
+    font-family:'DM Mono',monospace; font-size:32px; font-weight:500; transition:all 0.15s;
+  }
+  .slot.filled { border-color:rgba(200,240,96,0.4); background:rgba(200,240,96,0.05); }
+  .slot.active { border-color:var(--accent); box-shadow:0 0 0 3px rgba(200,240,96,0.12); }
+  .cursor { width:2px; height:30px; background:var(--accent); animation:blink 1s step-end infinite; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .keys { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); }
+  .key {
+    background:var(--surface); border:none; padding:20px;
+    font-family:'DM Mono',monospace; font-size:22px; font-weight:500; color:var(--text);
+    cursor:pointer; transition:background 0.1s; user-select:none; min-height:64px;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .key:active { background:var(--surface2); }
+  .key.k-del { font-size:16px; color:var(--muted); font-family:'DM Sans',sans-serif; }
+  .key.k-clear { font-size:11px; color:var(--muted); font-family:'DM Sans',sans-serif; text-transform:uppercase; letter-spacing:0.03em; }
+  .key.k-ok {
+    background:var(--accent); color:var(--bg); font-family:'Syne',sans-serif;
+    font-size:13px; font-weight:700; letter-spacing:0.05em;
+    grid-column:span 3; border-radius:0 0 16px 16px; min-height:56px;
+  }
+  .key.k-ok:disabled { background:var(--surface2); color:var(--muted); cursor:not-allowed; }
+  .result { border-radius:16px; padding:24px 20px; display:none; }
+  .result.show { display:block; animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes popIn { from{opacity:0;transform:scale(0.9)} to{opacity:1;transform:scale(1)} }
+  .result.ok { background:var(--ok-bg); border:1px solid var(--ok-border); }
+  .result.fail { background:var(--fail-bg); border:1px solid var(--fail-border); }
+  .result.warn { background:var(--warn-bg); border:1px solid rgba(245,158,11,0.3); }
+  .r-icon { font-size:40px; text-align:center; margin-bottom:10px; }
+  .r-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; text-align:center; margin-bottom:6px; }
+  .result.ok .r-title{color:var(--ok-text)} .result.fail .r-title{color:var(--fail-text)} .result.warn .r-title{color:var(--warn-text)}
+  .r-sub { font-size:13px; color:var(--muted); text-align:center; margin-bottom:16px; }
+  .r-info { background:rgba(255,255,255,0.03); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:8px; }
+  .r-row { display:flex; justify-content:space-between; font-size:13px; }
+  .r-label { color:var(--muted); } .r-val { font-weight:500; }
+  .btn-next { width:100%; background:none; border:1px solid var(--border); color:var(--muted); border-radius:10px; padding:13px; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; margin-top:14px; transition:border-color 0.2s,color 0.2s; }
+  .btn-next:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+  .hist { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+  .hist-header { padding:14px 16px; border-bottom:1px solid var(--border); font-family:'Syne',sans-serif; font-size:11px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:var(--muted); }
+  .hist-list { max-height:180px; overflow-y:auto; }
+  .hist-item { display:flex; align-items:center; gap:10px; padding:10px 16px; border-bottom:1px solid var(--border); font-size:13px; }
+  .hist-item:last-child { border-bottom:none; }
+  .hdot { width:6px; height:6px; border-radius:50%; flex-shrink:0; }
+  .hdot.ok{background:var(--ok-text)} .hdot.fail{background:var(--fail-text)}
+  .hcode { font-family:'DM Mono',monospace; font-weight:500; min-width:48px; }
+  .hname { flex:1; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .htime { color:var(--muted); font-size:11px; flex-shrink:0; }
+  .hist-empty { padding:24px; text-align:center; font-size:13px; color:var(--muted); }
+  .spinner { width:20px; height:20px; border:2px solid rgba(255,255,255,0.15); border-top-color:var(--bg); border-radius:50%; animation:spin 0.6s linear infinite; display:inline-block; vertical-align:middle; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">✦ VALIDADOR</div>
+  <div class="status"><div class="dot"></div>Online</div>
+</div>
+
+<div class="main">
+  <div class="counters">
+    <div class="cnt"><div class="cnt-num ok" id="c-ok">0</div><div class="cnt-label">Válidos</div></div>
+    <div class="cnt"><div class="cnt-num fail" id="c-fail">0</div><div class="cnt-label">Inválidos</div></div>
+    <div class="cnt"><div class="cnt-num total" id="c-total">0</div><div class="cnt-label">Total</div></div>
+  </div>
+
+  <div class="keypad-card" id="keypad">
+    <div class="kp-header">
+      <div class="kp-title">Digite o código de 4 dígitos</div>
+      <div class="code-display">
+        <div class="slot active" id="s0"><div class="cursor"></div></div>
+        <div class="slot" id="s1"></div>
+        <div class="slot" id="s2"></div>
+        <div class="slot" id="s3"></div>
+      </div>
+    </div>
+    <div class="keys">
+      <button class="key" data-k="1">1</button><button class="key" data-k="2">2</button><button class="key" data-k="3">3</button>
+      <button class="key" data-k="4">4</button><button class="key" data-k="5">5</button><button class="key" data-k="6">6</button>
+      <button class="key" data-k="7">7</button><button class="key" data-k="8">8</button><button class="key" data-k="9">9</button>
+      <button class="key k-clear" data-k="clear">Limpar</button>
+      <button class="key" data-k="0">0</button>
+      <button class="key k-del" data-k="del">⌫</button>
+      <button class="key k-ok" id="btn-ok" disabled>VERIFICAR INGRESSO</button>
+    </div>
+  </div>
+
+  <div class="result" id="result">
+    <div class="r-icon" id="r-icon"></div>
+    <div class="r-title" id="r-title"></div>
+    <div class="r-sub" id="r-sub"></div>
+    <div class="r-info" id="r-info"></div>
+    <button class="btn-next" onclick="resetar()">↩ Próximo ingresso</button>
+  </div>
+
+  <div class="hist">
+    <div class="hist-header">Histórico da sessão</div>
+    <div class="hist-list" id="hist-list">
+      <div class="hist-empty">Nenhuma validação ainda</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://lfkxobxubfqgzngesxsl.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxma3hvYnh1YmZxZ3puZ2VzeHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjI3MzksImV4cCI6MjA4OTMzODczOX0.uZAA7aF-vIJCtK-6knug6Nzf8uEdCT9BsEX7UBTLEiY';
+
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let code = [], cnt = {ok:0, fail:0}, hist = [];
+
+document.querySelectorAll('.key[data-k]').forEach(b => b.addEventListener('click', () => digitar(b.dataset.k)));
+
+document.addEventListener('keydown', e => {
+  if (e.key>='0'&&e.key<='9') digitar(e.key);
+  if (e.key==='Backspace') digitar('del');
+  if (e.key==='Escape') digitar('clear');
+  if (e.key==='Enter' && code.length===4) validar();
+});
+
+function digitar(k) {
+  if (k==='clear') code=[];
+  else if (k==='del') code.pop();
+  else if (code.length<4) code.push(k);
+  atualizar();
+  if (code.length===4) setTimeout(validar, 180);
+}
+
+function atualizar() {
+  for (let i=0;i<4;i++) {
+    const s = document.getElementById('s'+i);
+    s.classList.toggle('filled', i<code.length);
+    s.classList.toggle('active', i===code.length && code.length<4);
+    s.innerHTML = code[i] || (i===code.length ? '<div class="cursor"></div>' : '');
+  }
+  document.getElementById('btn-ok').disabled = code.length!==4;
+}
+
+document.getElementById('btn-ok').addEventListener('click', validar);
+
+async function validar() {
+  if (code.length!==4) return;
+  const cod = code.join('');
+  const btn = document.getElementById('btn-ok');
+  btn.innerHTML = '<span class="spinner"></span>';
+  btn.disabled = true;
+
+  const hora = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+
+  try {
+    // Busca ingresso pelo código
+    const { data: ing, error } = await supabase
+      .from('ingressos')
+      .select('*')
+      .eq('codigo', cod)
+      .single();
+
+    if (error || !ing) {
+      mostrarResultado('fail', '✕', 'INVÁLIDO', 'Código não encontrado.', `<div class="r-row"><span class="r-label">Código digitado</span><span class="r-val" style="font-family:'DM Mono',monospace">${cod}</span></div>`, cod, '—', hora);
+      return;
+    }
+
+    if (ing.usado) {
+      const usadoEm = ing.usado_em ? new Date(ing.usado_em).toLocaleString('pt-BR') : '—';
+      mostrarResultado('warn', '⚠', 'JÁ UTILIZADO', 'Este ingresso já foi usado.', `<div class="r-row"><span class="r-label">Nome</span><span class="r-val">${esc(ing.nome)}</span></div><div class="r-row"><span class="r-label">Usado em</span><span class="r-val">${usadoEm}</span></div>`, cod, ing.nome, hora);
+      return;
+    }
+
+    // Marca como usado
+    await supabase.from('ingressos').update({ usado: true, usado_em: new Date().toISOString() }).eq('codigo', cod);
+
+    mostrarResultado('ok', '✓', 'ENTRADA LIBERADA', 'Ingresso válido. Pode entrar!',
+      `<div class="r-row"><span class="r-label">Nome</span><span class="r-val">${esc(ing.nome)}</span></div>
+       <div class="r-row"><span class="r-label">Ingresso</span><span class="r-val">${esc(ing.ticket_name||'Pista')}</span></div>
+       <div class="r-row"><span class="r-label">Código</span><span class="r-val" style="font-family:'DM Mono',monospace">${cod}</span></div>
+       <div class="r-row"><span class="r-label">Horário</span><span class="r-val">${hora}</span></div>`,
+      cod, ing.nome, hora, true);
+
+  } catch(e) {
+    mostrarResultado('fail','✕','ERRO DE CONEXÃO','Verifique sua internet e tente novamente.','', cod,'—',hora);
+  }
+}
+
+function mostrarResultado(tipo, icon, titulo, sub, info, cod, nome, hora, valido=false) {
+  const r = document.getElementById('result');
+  r.className = 'result show ' + tipo;
+  document.getElementById('r-icon').textContent = icon;
+  document.getElementById('r-title').textContent = titulo;
+  document.getElementById('r-sub').textContent = sub;
+  document.getElementById('r-info').innerHTML = info;
+  document.getElementById('keypad').style.display = 'none';
+
+  if (valido) { cnt.ok++; } else { cnt.fail++; }
+  document.getElementById('c-ok').textContent = cnt.ok;
+  document.getElementById('c-fail').textContent = cnt.fail;
+  document.getElementById('c-total').textContent = cnt.ok + cnt.fail;
+
+  hist.unshift({cod, nome, ok: valido, hora});
+  document.getElementById('hist-list').innerHTML = hist.map(h =>
+    `<div class="hist-item"><div class="hdot ${h.ok?'ok':'fail'}"></div><span class="hcode">${esc(h.cod)}</span><span class="hname">${esc(h.nome)}</span><span class="htime">${h.hora}</span></div>`
+  ).join('');
+}
+
+function resetar() {
+  code = [];
+  atualizar();
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('keypad').style.display = '';
+  document.getElementById('btn-ok').innerHTML = 'VERIFICAR INGRESSO';
+  document.getElementById('btn-ok').disabled = true;
+}
+
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+atualizar();
+</script>
+</body>
+</html>
