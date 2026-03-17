@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seu Ingresso</title>
+<title>Seu Ingresso — TESTE CRIAR MUSIC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #0a0a0f; --surface: #13131a; --border: rgba(255,255,255,0.08);
@@ -14,33 +13,15 @@
     --ticket-bg: #f5f2e8; --ticket-text: #0a0a0f; --ticket-muted: #5a5850;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg); color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
-  }
-  body::before {
-    content: ''; position: fixed; inset: 0;
-    background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(74,222,128,0.08) 0%, transparent 60%);
-    pointer-events: none;
-  }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 60% 50% at 50% 0%, rgba(74,222,128,0.08) 0%, transparent 60%); pointer-events: none; }
   .wrapper { position: relative; z-index: 1; width: 100%; max-width: 400px; }
   .success-header { text-align: center; margin-bottom: 28px; animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1); }
   @keyframes popIn { from{opacity:0;transform:scale(0.7)} to{opacity:1;transform:scale(1)} }
-  .check-circle {
-    width: 56px; height: 56px;
-    background: rgba(74,222,128,0.12); border: 1.5px solid rgba(74,222,128,0.3);
-    border-radius: 50%; display: flex; align-items: center; justify-content: center;
-    font-size: 24px; margin: 0 auto 16px;
-  }
+  .check-circle { width: 56px; height: 56px; background: rgba(74,222,128,0.12); border: 1.5px solid rgba(74,222,128,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 16px; }
   .success-title { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
   .success-sub { font-size: 13px; color: var(--muted); }
-  .ticket {
-    background: var(--ticket-bg); border-radius: 20px; overflow: hidden;
-    position: relative; margin-bottom: 16px;
-    box-shadow: 0 24px 48px rgba(0,0,0,0.5);
-    animation: slideUp 0.5s 0.15s cubic-bezier(0.34,1.2,0.64,1) both;
-  }
+  .ticket { background: var(--ticket-bg); border-radius: 20px; overflow: hidden; position: relative; margin-bottom: 16px; box-shadow: 0 24px 48px rgba(0,0,0,0.5); animation: slideUp 0.5s 0.15s cubic-bezier(0.34,1.2,0.64,1) both; }
   @keyframes slideUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
   .ticket-top { padding: 24px 24px 20px; }
   .ticket-event-tag { font-family:'Syne',sans-serif; font-size:9px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--ticket-muted); margin-bottom:6px; }
@@ -51,7 +32,7 @@
   .tmeta-val { font-size:13px; font-weight:500; color:var(--ticket-text); }
   .ticket-divider { position:relative; height:28px; display:flex; align-items:center; }
   .ticket-divider::before { content:''; position:absolute; left:-14px; width:28px; height:28px; background:var(--bg); border-radius:50%; z-index:2; }
-  .ticket-divider::after  { content:''; position:absolute; right:-14px; width:28px; height:28px; background:var(--bg); border-radius:50%; z-index:2; }
+  .ticket-divider::after { content:''; position:absolute; right:-14px; width:28px; height:28px; background:var(--bg); border-radius:50%; z-index:2; }
   .ticket-perforation { flex:1; border-top:2px dashed rgba(10,10,15,0.15); margin:0 6px; }
   .ticket-bottom { padding:20px 24px 24px; display:flex; align-items:center; justify-content:space-between; gap:16px; }
   .ticket-holder { flex:1; min-width:0; }
@@ -62,39 +43,16 @@
   .code-label { font-size:8px; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:rgba(245,242,232,0.4); margin-bottom:4px; }
   .code-digits { font-family:'DM Mono',monospace; font-size:28px; font-weight:500; color:var(--ticket-bg); letter-spacing:0.12em; }
   .actions { display:flex; flex-direction:column; gap:10px; animation: slideUp 0.5s 0.3s cubic-bezier(0.34,1.2,0.64,1) both; }
-  .btn-primary {
-    width:100%; background:var(--accent); color:var(--bg); border:none; border-radius:12px; padding:15px;
-    font-family:'Syne',sans-serif; font-size:14px; font-weight:700;
-    cursor:pointer; transition:transform 0.15s, box-shadow 0.15s;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-  }
-  .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(200,240,96,0.25); }
-  .btn-ghost {
-    width:100%; background:none; border:1px solid var(--border); color:var(--muted);
-    border-radius:12px; padding:14px; font-family:'DM Sans',sans-serif; font-size:14px;
-    cursor:pointer; transition:border-color 0.2s, color 0.2s;
-    display:flex; align-items:center; justify-content:center; gap:8px;
-  }
+  .btn-ghost { width:100%; background:none; border:1px solid var(--border); color:var(--muted); border-radius:12px; padding:14px; font-family:'DM Sans',sans-serif; font-size:14px; cursor:pointer; transition:border-color 0.2s, color 0.2s; display:flex; align-items:center; justify-content:center; gap:8px; }
   .btn-ghost:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
-  .usage-notice {
-    display:flex; align-items:flex-start; gap:10px;
-    padding:12px 14px; background:rgba(200,240,96,0.06); border:1px solid rgba(200,240,96,0.15);
-    border-radius:10px; font-size:12px; color:var(--muted); margin-top:4px;
-  }
-  .spinner {
-    width:36px; height:36px;
-    border:2px solid rgba(255,255,255,0.1); border-top-color:var(--accent);
-    border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 16px;
-  }
+  .usage-notice { display:flex; align-items:flex-start; gap:10px; padding:12px 14px; background:rgba(200,240,96,0.06); border:1px solid rgba(200,240,96,0.15); border-radius:10px; font-size:12px; color:var(--muted); margin-top:4px; }
+  .spinner { width:36px; height:36px; border:2px solid rgba(255,255,255,0.1); border-top-color:var(--accent); border-radius:50%; animation:spin 0.7s linear infinite; margin:0 auto 16px; }
   @keyframes spin { to{transform:rotate(360deg)} }
   .state-box { text-align:center; padding:48px 0; }
   .state-icon { font-size:40px; margin-bottom:12px; }
   .state-title { font-family:'Syne',sans-serif; font-size:18px; font-weight:700; margin-bottom:8px; }
   .state-msg { font-size:13px; color:var(--muted); line-height:1.6; }
-  .btn-retry {
-    margin-top:20px; padding:12px 24px; background:none; border:1px solid var(--border);
-    color:var(--muted); border-radius:10px; font-size:14px; cursor:pointer;
-  }
+  .btn-retry { margin-top:20px; padding:12px 24px; background:none; border:1px solid var(--border); color:var(--muted); border-radius:10px; font-size:14px; cursor:pointer; }
   .btn-retry:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
 </style>
 </head>
@@ -105,12 +63,12 @@
     <div class="state-msg">Buscando seu ingresso…</div>
   </div>
 </div>
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-<script>
 const SUPABASE_URL = 'https://lfkxobxubfqgzngesxsl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxma3hvYnh1YmZxZ3puZ2VzeHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjI3MzksImV4cCI6MjA4OTMzODczOX0.uZAA7aF-vIJCtK-6knug6Nzf8uEdCT9BsEX7UBTLEiY';
 
-// ✏️ ALTERE AS INFORMAÇÕES DO SEU EVENTO
 const EVENTO = {
   nome: 'TESTE CRIAR MUSIC',
   data: 'Sáb, 14 Jun 2025',
@@ -118,34 +76,23 @@ const EVENTO = {
   local: 'Sete Lagoas - MG'
 };
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const db = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function getParam(n){ return new URLSearchParams(window.location.search).get(n); }
 
 async function carregar() {
-  // Tenta pegar o pedido_id da URL ou do localStorage (após redirect do PagBank)
   let pedidoId = getParam('pedido_id') || getParam('reference_id') || localStorage.getItem('pedido_pendente');
+  if (!pedidoId) { mostrarErro('Link inválido.', 'Verifique se o link do ingresso está correto.'); return; }
 
-  if (!pedidoId) {
-    mostrarErro('Link inválido.', 'Verifique se o link do ingresso está correto.');
-    return;
-  }
-
-  // Busca o ingresso no Supabase
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('ingressos')
     .select('*')
     .eq('pedido_id', pedidoId)
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) {
-    // Ingresso ainda não gerado — pode ser que o webhook ainda não chegou
-    mostrarAguardando(pedidoId);
-    return;
-  }
-
+  if (error || !data) { mostrarAguardando(pedidoId); return; }
   mostrarIngresso(data);
 }
 
@@ -156,7 +103,7 @@ function mostrarIngresso(ing) {
       <div class="success-title">Pagamento confirmado!</div>
       <div class="success-sub">Apresente este ingresso na entrada do evento</div>
     </div>
-    <div class="ticket" id="ticket-card">
+    <div class="ticket">
       <div class="ticket-top">
         <div class="ticket-event-tag">✦ Ingresso válido</div>
         <div class="ticket-event-name">${esc(EVENTO.nome)}</div>
@@ -181,7 +128,7 @@ function mostrarIngresso(ing) {
       </div>
     </div>
     <div class="actions">
-      <button class="btn-ghost" onclick="compartilharWhatsApp()">↑ Compartilhar via WhatsApp</button>
+      <button class="btn-ghost" onclick="compartilhar()">↑ Compartilhar via WhatsApp</button>
       <div class="usage-notice">
         <span>⚠</span>
         <span>Código de <strong style="font-weight:500">uso único</strong>. Não compartilhe com outras pessoas — será invalidado na entrada.</span>
@@ -196,10 +143,9 @@ function mostrarAguardando(pedidoId) {
       <div class="state-icon">⏳</div>
       <div class="state-title">Confirmando pagamento…</div>
       <div class="state-msg">Se você acabou de pagar, aguarde alguns segundos.<br>Seu ingresso aparecerá automaticamente.</div>
-      <button class="btn-retry" onclick="carregar()">↺ Verificar agora</button>
+      <button class="btn-retry" onclick="location.reload()">↺ Verificar agora</button>
     </div>
   `;
-  // Tenta de novo automaticamente após 5 segundos
   setTimeout(carregar, 5000);
 }
 
@@ -213,7 +159,7 @@ function mostrarErro(titulo, msg) {
   `;
 }
 
-function compartilharWhatsApp() {
+window.compartilhar = function() {
   const url = encodeURIComponent(window.location.href);
   window.open('https://wa.me/?text=Meu+ingresso:+' + url);
 }
