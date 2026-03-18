@@ -3,80 +3,76 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ingressos — Comprar</title>
+<title>Ingressos — TESTE CRIAR MUSIC</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0a0f; --surface: #13131a; --surface2: #1c1c26;
-    --border: rgba(255,255,255,0.08); --accent: #c8f060; --accent2: #7b5cfa;
-    --text: #f0efea; --muted: #6b6a72; --error: #ff5f5f;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
-  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 60% 50% at 80% 20%, rgba(123,92,250,0.12) 0%, transparent 60%); pointer-events: none; }
-  .wrapper { position: relative; z-index: 1; width: 100%; max-width: 460px; }
-  .event-header { margin-bottom: 32px; text-align: center; }
-  .event-tag { display: inline-block; font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(200,240,96,0.3); padding: 4px 12px; border-radius: 100px; margin-bottom: 16px; }
-  .event-title { font-family: 'Syne', sans-serif; font-size: clamp(28px, 7vw, 42px); font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 10px; }
-  .event-title span { color: var(--accent); }
-  .event-meta { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
-  .meta-item { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
-  .meta-dot { width: 4px; height: 4px; background: var(--accent2); border-radius: 50%; }
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-  .stepper { display: flex; border-bottom: 1px solid var(--border); padding: 0 24px; }
-  .step { flex: 1; display: flex; align-items: center; gap: 8px; padding: 16px 0; font-size: 12px; font-weight: 500; color: var(--muted); border-bottom: 2px solid transparent; transition: all 0.3s; }
-  .step.active { color: var(--text); border-bottom-color: var(--accent); }
-  .step.done { color: var(--accent); }
-  .step-num { width: 20px; height: 20px; border-radius: 50%; border: 1px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; }
-  .step.active .step-num, .step.done .step-num { background: var(--accent); border-color: var(--accent); color: var(--bg); }
-  .panel { display: none; padding: 28px 28px 32px; animation: fadeIn 0.35s ease; }
-  .panel.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  .ticket-select { display: flex; flex-direction: column; gap: 10px; margin-bottom: 24px; }
-  .ticket-option { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; cursor: pointer; transition: border-color 0.2s; user-select: none; }
-  .ticket-option:hover { border-color: rgba(255,255,255,0.2); }
-  .ticket-option.selected { border-color: var(--accent); background: rgba(200,240,96,0.05); }
-  .ticket-option input[type=radio] { display: none; }
-  .ticket-info { display: flex; flex-direction: column; gap: 2px; }
-  .ticket-name { font-size: 14px; font-weight: 500; }
-  .ticket-desc { font-size: 12px; color: var(--muted); }
-  .ticket-price { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; color: var(--accent); }
-  .qty-control { display: flex; align-items: center; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; width: fit-content; }
-  .qty-btn { background: none; border: none; color: var(--text); font-size: 20px; width: 44px; height: 44px; cursor: pointer; transition: background 0.15s; display: flex; align-items: center; justify-content: center; }
-  .qty-btn:hover { background: rgba(255,255,255,0.06); }
-  .qty-val { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700; width: 44px; text-align: center; border-left: 1px solid var(--border); border-right: 1px solid var(--border); height: 44px; line-height: 44px; }
-  .field { margin-bottom: 16px; }
-  label { display: block; font-size: 11px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin-bottom: 7px; }
-  input[type=text], input[type=tel] { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text); transition: border-color 0.2s; outline: none; }
-  input:focus { border-color: var(--accent2); box-shadow: 0 0 0 3px rgba(123,92,250,0.15); }
-  input.error { border-color: var(--error); }
-  .field-error { font-size: 11px; color: var(--error); margin-top: 5px; display: none; }
-  .field-error.show { display: block; }
-  .summary { background: var(--surface2); border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px; }
-  .summary-row { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
-  .summary-row.total { color: var(--text); font-weight: 500; font-size: 15px; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
-  .summary-row.total span:last-child { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--accent); font-size: 18px; }
-  .btn-primary { width: 100%; background: var(--accent); color: var(--bg); border: none; border-radius: 12px; padding: 16px; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s; display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(200,240,96,0.3); }
-  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-  .btn-secondary { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 12px; padding: 14px; font-family: 'DM Sans', sans-serif; font-size: 14px; cursor: pointer; transition: border-color 0.2s, color 0.2s; width: 100%; margin-top: 10px; }
-  .btn-secondary:hover { border-color: rgba(255,255,255,0.2); color: var(--text); }
-  .payment-methods { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 24px; }
-  .pay-method { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: border-color 0.2s; user-select: none; }
-  .pay-method.selected { border-color: var(--accent2); background: rgba(123,92,250,0.08); }
-  .pay-method input { display: none; }
-  .pay-icon { font-size: 20px; margin-bottom: 4px; }
-  .pay-label { font-size: 11px; color: var(--muted); }
-  .pay-method.selected .pay-label { color: var(--text); }
-  .pagbank-notice { display: flex; align-items: center; gap: 10px; background: rgba(123,92,250,0.08); border: 1px solid rgba(123,92,250,0.2); border-radius: 10px; padding: 12px 14px; font-size: 12px; color: var(--muted); margin-bottom: 20px; }
-  .pagbank-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 11px; color: var(--accent2); flex-shrink: 0; padding: 4px 8px; border: 1px solid rgba(123,92,250,0.4); border-radius: 6px; }
-  .loading-overlay { display: none; position: fixed; inset: 0; background: rgba(10,10,15,0.85); z-index: 100; align-items: center; justify-content: center; flex-direction: column; gap: 16px; }
-  .loading-overlay.show { display: flex; }
-  .spinner { width: 40px; height: 40px; border: 2px solid rgba(255,255,255,0.1); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-text { font-family: 'Syne', sans-serif; font-size: 14px; color: var(--muted); }
-  .footer { text-align: center; font-size: 11px; color: var(--muted); margin-top: 20px; }
+  :root { --bg:#0a0a0f;--surface:#13131a;--surface2:#1c1c26;--border:rgba(255,255,255,0.08);--accent:#c8f060;--accent2:#7b5cfa;--text:#f0efea;--muted:#6b6a72;--error:#ff5f5f; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 60% 50% at 80% 20%,rgba(123,92,250,0.12) 0%,transparent 60%);pointer-events:none}
+  .wrapper{position:relative;z-index:1;width:100%;max-width:460px}
+  .event-header{margin-bottom:32px;text-align:center}
+  .event-tag{display:inline-block;font-family:'Syne',sans-serif;font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(200,240,96,.3);padding:4px 12px;border-radius:100px;margin-bottom:16px}
+  .event-title{font-family:'Syne',sans-serif;font-size:clamp(28px,7vw,42px);font-weight:800;line-height:1.05;letter-spacing:-.02em;margin-bottom:10px}
+  .event-title span{color:var(--accent)}
+  .event-meta{display:flex;justify-content:center;gap:16px;flex-wrap:wrap}
+  .meta-item{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:5px}
+  .meta-dot{width:4px;height:4px;background:var(--accent2);border-radius:50%}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden}
+  .stepper{display:flex;border-bottom:1px solid var(--border);padding:0 24px}
+  .step{flex:1;display:flex;align-items:center;gap:8px;padding:16px 0;font-size:12px;font-weight:500;color:var(--muted);border-bottom:2px solid transparent;transition:all .3s}
+  .step.active{color:var(--text);border-bottom-color:var(--accent)}
+  .step.done{color:var(--accent)}
+  .step-num{width:20px;height:20px;border-radius:50%;border:1px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0}
+  .step.active .step-num,.step.done .step-num{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+  .panel{display:none;padding:28px 28px 32px;animation:fadeIn .35s ease}
+  .panel.active{display:block}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .ticket-select{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+  .ticket-option{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:border-color .2s;user-select:none}
+  .ticket-option:hover{border-color:rgba(255,255,255,.2)}
+  .ticket-option.selected{border-color:var(--accent);background:rgba(200,240,96,.05)}
+  .ticket-option input[type=radio]{display:none}
+  .ticket-info{display:flex;flex-direction:column;gap:2px}
+  .ticket-name{font-size:14px;font-weight:500}
+  .ticket-desc{font-size:12px;color:var(--muted)}
+  .ticket-price{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--accent)}
+  .qty-control{display:flex;align-items:center;background:var(--surface2);border:1px solid var(--border);border-radius:10px;overflow:hidden;width:fit-content}
+  .qty-btn{background:none;border:none;color:var(--text);font-size:20px;width:44px;height:44px;cursor:pointer;transition:background .15s;display:flex;align-items:center;justify-content:center}
+  .qty-btn:hover{background:rgba(255,255,255,.06)}
+  .qty-val{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;width:44px;text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);height:44px;line-height:44px}
+  .field{margin-bottom:16px}
+  label{display:block;font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+  input[type=text],input[type=tel]{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);transition:border-color .2s;outline:none}
+  input:focus{border-color:var(--accent2);box-shadow:0 0 0 3px rgba(123,92,250,.15)}
+  input.error{border-color:var(--error)}
+  .field-error{font-size:11px;color:var(--error);margin-top:5px;display:none}
+  .field-error.show{display:block}
+  .summary{background:var(--surface2);border-radius:12px;padding:16px;margin-bottom:24px;display:flex;flex-direction:column;gap:8px}
+  .summary-row{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+  .summary-row.total{color:var(--text);font-weight:500;font-size:15px;border-top:1px solid var(--border);padding-top:8px;margin-top:2px}
+  .summary-row.total span:last-child{font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);font-size:18px}
+  .btn-primary{width:100%;background:var(--accent);color:var(--bg);border:none;border-radius:12px;padding:16px;font-family:'Syne',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s,opacity .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+  .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 24px rgba(200,240,96,.3)}
+  .btn-primary:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  .btn-secondary{background:none;border:1px solid var(--border);color:var(--muted);border-radius:12px;padding:14px;font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;transition:border-color .2s,color .2s;width:100%;margin-top:10px}
+  .btn-secondary:hover{border-color:rgba(255,255,255,.2);color:var(--text)}
+  .payment-methods{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:24px}
+  .pay-method{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .2s;user-select:none}
+  .pay-method.selected{border-color:var(--accent2);background:rgba(123,92,250,.08)}
+  .pay-method input{display:none}
+  .pay-icon{font-size:20px;margin-bottom:4px}
+  .pay-label{font-size:11px;color:var(--muted)}
+  .pay-method.selected .pay-label{color:var(--text)}
+  .pagbank-notice{display:flex;align-items:center;gap:10px;background:rgba(123,92,250,.08);border:1px solid rgba(123,92,250,.2);border-radius:10px;padding:12px 14px;font-size:12px;color:var(--muted);margin-bottom:20px}
+  .pagbank-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:11px;color:var(--accent2);flex-shrink:0;padding:4px 8px;border:1px solid rgba(123,92,250,.4);border-radius:6px}
+  .loading-overlay{display:none;position:fixed;inset:0;background:rgba(10,10,15,.85);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+  .loading-overlay.show{display:flex}
+  .spinner{width:40px;height:40px;border:2px solid rgba(255,255,255,.1);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Syne',sans-serif;font-size:14px;color:var(--muted)}
+  .footer{text-align:center;font-size:11px;color:var(--muted);margin-top:20px}
 </style>
 </head>
 <body>
@@ -167,9 +163,12 @@
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
+// ✏️ Após subir o servidor no Railway, cole a URL dele aqui:
+const BACKEND_URL = 'https://servidor-ingressos-production.up.railway.app';
+
 const SUPABASE_URL = 'https://lfkxobxubfqgzngesxsl.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxma3hvYnh1YmZxZ3puZ2VzeHNsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM3NjI3MzksImV4cCI6MjA4OTMzODczOX0.uZAA7aF-vIJCtK-6knug6Nzf8uEdCT9BsEX7UBTLEiY';
-const PAGBANK_LINK = 'https://pag.ae/81BhWXEHM';
+
 const TICKETS = {
   pista: { name: 'Pista — 1º lote', price: 8000 },
   vip:   { name: 'VIP — Camarote',  price: 16000 }
@@ -199,7 +198,7 @@ function goStep(n) {
     if (i===n) tab.classList.add('active');
     if (i<n) tab.classList.add('done');
   });
-  window.scrollTo({top:0, behavior:'smooth'});
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function phoneMask(v) {
@@ -262,26 +261,27 @@ document.getElementById('btn-next-2').addEventListener('click', () => {
 document.getElementById('btn-pagar').addEventListener('click', async () => {
   const btn = document.getElementById('btn-pagar');
   btn.disabled = true;
-  document.getElementById('loading-text').textContent = 'Salvando pedido…';
+  document.getElementById('loading-text').textContent = 'Criando sua cobrança…';
   document.getElementById('loading').classList.add('show');
   try {
     const t = TICKETS[state.ticket];
-    const pedidoId = crypto.randomUUID();
-    const { error } = await db.from('pedidos').insert({
-      id: pedidoId,
-      nome: state.nome,
-      telefone: state.telefone,
-      ticket_type: state.ticket,
-      ticket_name: t.name,
-      qty: state.qty,
-      amount: t.price * state.qty,
-      payment_method: state.payment,
-      status: 'PENDING'
+    const res = await fetch(BACKEND_URL + '/api/criar-pedido', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nome: state.nome,
+        telefone: state.telefone,
+        ticket_type: state.ticket,
+        ticket_name: t.name,
+        qty: state.qty,
+        amount: t.price * state.qty,
+        payment_method: state.payment
+      })
     });
-    if (error) throw error;
-    localStorage.setItem('pedido_pendente', pedidoId);
+    const data = await res.json();
+    if (!data.payment_url) throw new Error(data.error || 'Erro ao gerar cobrança');
     document.getElementById('loading-text').textContent = 'Redirecionando para o pagamento…';
-    setTimeout(() => { window.location.href = PAGBANK_LINK; }, 800);
+    setTimeout(() => { window.location.href = data.payment_url; }, 800);
   } catch (err) {
     console.error(err);
     document.getElementById('loading').classList.remove('show');
